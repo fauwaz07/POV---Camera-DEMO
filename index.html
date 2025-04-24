@@ -21,7 +21,11 @@
 
         // Access device camera
         navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { exact: "environment" } }
+            video: {
+                facingMode: { exact: "environment" },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            }
         })
             .then(stream => video.srcObject = stream)
             .catch(err => {
