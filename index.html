@@ -5,58 +5,59 @@
   <title>POV Camera App</title>
 </head>
 <body>
-  <h1>Snap a Photo</h1>
-  <video id="video" autoplay playsinline width="300"></video><br>
-  <button id="snap">📸 Take Photo</button>
-  <button id="upload" disabled>⬆️ Upload</button>
+    <h1>Snap a Photo</h1>
+    <video id="video" autoplay playsinline width="300"></video><br>
+    <button id="snap">📸 Take Photo</button>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <button id="upload" disabled>⬆️ Upload</button>
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const snapBtn = document.getElementById('snap');
-    const uploadBtn = document.getElementById('upload');
-    let imageData = "";
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const snapBtn = document.getElementById('snap');
+        const uploadBtn = document.getElementById('upload');
+        let imageData = "";
 
-    // Access device camera
-      navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { exact: "environment" } }
-      })
-          .then(stream => video.srcObject = stream)
-          .catch(err => {
-              console.warn("Back camera not available, falling back to default:", err);
-              return navigator.mediaDevices.getUserMedia({ video: true });
-          })
-          .then(stream => {
-              if (stream) video.srcObject = stream;
-          });
-
-
-      snapBtn.onclick = () => {
-          const videoWidth = video.videoWidth;
-          const videoHeight = video.videoHeight;
-
-          // Set canvas to match the native resolution of video
-          canvas.width = videoWidth;
-          canvas.height = videoHeight;
-
-          ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-          imageData = canvas.toDataURL("image/jpeg").split(",")[1]; // remove base64 prefix
-          uploadBtn.disabled = false;
-      };
-
-    uploadBtn.onclick = () => {
-        fetch("https://script.google.com/macros/s/AKfycbxiDCyCuxW-CYnveelw_oHaKG2hEOfkJEjPeWG1si9jLLZWIpbrfsvS-3RM628UkXgRAQ/exec", {
-        method: "POST",
-        body: new URLSearchParams({
-          image: imageData,
-          filename: "photo_" + Date.now() + ".jpg"
+        // Access device camera
+        navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { exact: "environment" } }
         })
-      })
-      .then(res => res.text())
-      .then(txt => alert("Upload: " + txt))
-      .catch(err => alert("Error: " + err));
-    };
-  </script>
+            .then(stream => video.srcObject = stream)
+            .catch(err => {
+                console.warn("Back camera not available, falling back to default:", err);
+                return navigator.mediaDevices.getUserMedia({ video: true });
+            })
+            .then(stream => {
+                if (stream) video.srcObject = stream;
+            });
+
+
+        snapBtn.onclick = () => {
+            const videoWidth = video.videoWidth;
+            const videoHeight = video.videoHeight;
+
+            // Set canvas to match the native resolution of video
+            canvas.width = videoWidth;
+            canvas.height = videoHeight;
+
+            ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+            imageData = canvas.toDataURL("image/jpeg").split(",")[1]; // remove base64 prefix
+            uploadBtn.disabled = false;
+        };
+
+        uploadBtn.onclick = () => {
+            fetch("https://script.google.com/macros/s/AKfycbxiDCyCuxW-CYnveelw_oHaKG2hEOfkJEjPeWG1si9jLLZWIpbrfsvS-3RM628UkXgRAQ/exec", {
+                method: "POST",
+                body: new URLSearchParams({
+                    image: imageData,
+                    filename: "photo_" + Date.now() + ".jpg"
+                })
+            })
+                .then(res => res.text())
+                .then(txt => alert("Upload: " + txt))
+                .catch(err => alert("Error: " + err));
+        };
+    </script>
 </body>
 </html>
