@@ -1,47 +1,85 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>POV Camera App</title>
+    <meta charset="UTF-8">
+    <title>POV Camera App</title>
+    <style>
+        video {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 8px;
+        }
+
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 1em;
+        }
+
+        #photoList img {
+            max-width: 100px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Snap a Photo</h1>
-    <input type="file" accept="image/*" capture="environment" id="cameraInput" multiple>
+    <h1>📸 Snap Your Moments</h1>
+    <video id="video" autoplay playsinline></video>
     <br>
-    <button id="upload" disabled>⬆️ Upload</button>
+    <button id="takePhoto">📷 Take Photo</button>
+    <button id="uploadAll" disabled>⬆️ Upload All</button>
+    <div id="photoList"></div>
+
+    <canvas id="canvas" style="display: none;"></canvas>
 
     <script>
-        const cameraInput = document.getElementById('cameraInput');
-        const uploadBtn = document.getElementById('upload');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const takePhotoBtn = document.getElementById('takePhoto');
+        const uploadAllBtn = document.getElementById('uploadAll');
+        const photoList = document.getElementById('photoList');
+
         let imagesToUpload = [];
 
-        cameraInput.addEventListener("change", () => {
-            imagesToUpload = []; // Clear previous session
-            const files = cameraInput.files;
-
-            if (!files.length) return;
-
-            let processed = 0;
-
-            for (let i = 0; i < files.length; i++) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const base64 = e.target.result.split(',')[1]; // remove base64 prefix
-                    imagesToUpload.push({
-                        filename: `photo_${Date.now()}_${i}.jpg`,
-                        data: base64
-                    });
-
-                    processed++;
-                    if (processed === files.length) {
-                        uploadBtn.disabled = false;
-                    }
-                };
-                reader.readAsDataURL(files[i]);
+        // Request high-res back camera
+        navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: { exact: "environment" },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
             }
-        });
+        })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                alert("Camera access failed: " + err);
+            });
 
-        uploadBtn.onclick = async () => {
+        takePhotoBtn.onclick = () => {
+            const w = video.videoWidth;
+            const h = video.videoHeight;
+            canvas.width = w;
+            canvas.height = h;
+            ctx.drawImage(video, 0, 0, w, h);
+
+            const dataUrl = canvas.toDataURL("image/jpeg");
+            const base64 = dataUrl.split(',')[1];
+            const filename = `photo_${Date.now()}.jpg`;
+
+            imagesToUpload.push({ filename, data: base64 });
+
+            const img = new Image();
+            img.src = dataUrl;
+            photoList.appendChild(img);
+
+            uploadAllBtn.disabled = false;
+        };
+
+        uploadAllBtn.onclick = async () => {
             for (const img of imagesToUpload) {
                 await fetch("https://script.google.com/macros/s/AKfycbxiDCyCuxW-CYnveelw_oHaKG2hEOfkJEjPeWG1si9jLLZWIpbrfsvS-3RM628UkXgRAQ/exec", {
                     method: "POST",
@@ -56,8 +94,9 @@
             }
 
             alert("All photos uploaded!");
-            uploadBtn.disabled = true;
-            cameraInput.value = ""; // Reset file input
+            uploadAllBtn.disabled = true;
+            imagesToUpload = [];
+            photoList.innerHTML = "";
         };
     </script>
 
