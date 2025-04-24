@@ -8,7 +8,6 @@
   <h1>Snap a Photo</h1>
   <video id="video" autoplay playsinline width="300"></video><br>
   <button id="snap">📸 Take Photo</button>
-  <canvas id="canvas" width="300" height="200" style="display:none;"></canvas><br>
   <button id="upload" disabled>⬆️ Upload</button>
 
   <script>
@@ -33,11 +32,18 @@
           });
 
 
-    snapBtn.onclick = () => {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      imageData = canvas.toDataURL("image/jpeg").split(",")[1]; // remove base64 prefix
-      uploadBtn.disabled = false;
-    };
+      snapBtn.onclick = () => {
+          const videoWidth = video.videoWidth;
+          const videoHeight = video.videoHeight;
+
+          // Set canvas to match the native resolution of video
+          canvas.width = videoWidth;
+          canvas.height = videoHeight;
+
+          ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
+          imageData = canvas.toDataURL("image/jpeg").split(",")[1]; // remove base64 prefix
+          uploadBtn.disabled = false;
+      };
 
     uploadBtn.onclick = () => {
         fetch("https://script.google.com/macros/s/AKfycbxiDCyCuxW-CYnveelw_oHaKG2hEOfkJEjPeWG1si9jLLZWIpbrfsvS-3RM628UkXgRAQ/exec", {
