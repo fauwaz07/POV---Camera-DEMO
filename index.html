@@ -80,6 +80,9 @@
         };
 
         uploadAllBtn.onclick = async () => {
+            uploadAllBtn.disabled = true;
+            uploadAllBtn.textContent = "Uploading...";
+
             for (const img of imagesToUpload) {
                 await fetch("https://script.google.com/macros/s/AKfycbxiDCyCuxW-CYnveelw_oHaKG2hEOfkJEjPeWG1si9jLLZWIpbrfsvS-3RM628UkXgRAQ/exec", {
                     method: "POST",
@@ -94,9 +97,10 @@
             }
 
             alert("All photos uploaded!");
-            uploadAllBtn.disabled = true;
             imagesToUpload = [];
             photoList.innerHTML = "";
+            uploadAllBtn.textContent = "⬆️ Upload All";
+            uploadAllBtn.disabled = true;
         };
     </script>
 
