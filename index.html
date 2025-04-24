@@ -20,8 +20,18 @@
     let imageData = "";
 
     // Access device camera
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => video.srcObject = stream);
+      navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { exact: "environment" } }
+      })
+          .then(stream => video.srcObject = stream)
+          .catch(err => {
+              console.warn("Back camera not available, falling back to default:", err);
+              return navigator.mediaDevices.getUserMedia({ video: true });
+          })
+          .then(stream => {
+              if (stream) video.srcObject = stream;
+          });
+
 
     snapBtn.onclick = () => {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
