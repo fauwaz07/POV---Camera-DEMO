@@ -6,39 +6,60 @@
 </head>
 <body>
     <h1>Snap a Photo</h1>
-    <input type="file" accept="image/*" capture="environment" id="cameraInput">
+    <input type="file" accept="image/*" capture="environment" id="cameraInput" multiple>
     <br>
     <button id="upload" disabled>⬆️ Upload</button>
 
     <script>
         const cameraInput = document.getElementById('cameraInput');
         const uploadBtn = document.getElementById('upload');
-        let imageBase64 = "";
+        let imagesToUpload = [];
 
         cameraInput.addEventListener("change", () => {
-            const file = cameraInput.files[0];
-            if (!file) return;
+            imagesToUpload = []; // Clear previous session
+            const files = cameraInput.files;
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                imageBase64 = e.target.result.split(',')[1]; // remove base64 prefix
-                uploadBtn.disabled = false;
-            };
-            reader.readAsDataURL(file);
+            if (!files.length) return;
+
+            let processed = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const base64 = e.target.result.split(',')[1]; // remove base64 prefix
+                    imagesToUpload.push({
+                        filename: `photo_${Date.now()}_${i}.jpg`,
+                        data: base64
+                    });
+
+                    processed++;
+                    if (processed === files.length) {
+                        uploadBtn.disabled = false;
+                    }
+                };
+                reader.readAsDataURL(files[i]);
+            }
         });
 
-        uploadBtn.onclick = () => {
-            fetch("https://script.google.com/macros/s/AKfycbxiDCyCuxW-CYnveelw_oHaKG2hEOfkJEjPeWG1si9jLLZWIpbrfsvS-3RM628UkXgRAQ/exec", {
-                method: "POST",
-                body: new URLSearchParams({
-                    image: imageBase64,
-                    filename: "photo_" + Date.now() + ".jpg"
+        uploadBtn.onclick = async () => {
+            for (const img of imagesToUpload) {
+                await fetch("https://script.google.com/macros/s/AKfycbxiDCyCuxW-CYnveelw_oHaKG2hEOfkJEjPeWG1si9jLLZWIpbrfsvS-3RM628UkXgRAQ/exec", {
+                    method: "POST",
+                    body: new URLSearchParams({
+                        image: img.data,
+                        filename: img.filename
+                    })
                 })
-            })
-                .then(res => res.text())
-                .then(txt => alert("Upload: " + txt))
-                .catch(err => alert("Error: " + err));
+                    .then(res => res.text())
+                    .then(txt => console.log("Uploaded:", img.filename, txt))
+                    .catch(err => alert("Error uploading " + img.filename + ": " + err));
+            }
+
+            alert("All photos uploaded!");
+            uploadBtn.disabled = true;
+            cameraInput.value = ""; // Reset file input
         };
     </script>
+
 </body>
 </html>
