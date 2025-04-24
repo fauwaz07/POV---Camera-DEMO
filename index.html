@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>POV Camera App</title>
+</head>
+<body>
+  <h1>Snap a Photo</h1>
+  <video id="video" autoplay playsinline width="300"></video><br>
+  <button id="snap">📸 Take Photo</button>
+  <canvas id="canvas" width="300" height="200" style="display:none;"></canvas><br>
+  <button id="upload" disabled>⬆️ Upload</button>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const snapBtn = document.getElementById('snap');
+    const uploadBtn = document.getElementById('upload');
+    let imageData = "";
+
+    // Access device camera
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => video.srcObject = stream);
+
+    snapBtn.onclick = () => {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      imageData = canvas.toDataURL("image/jpeg").split(",")[1]; // remove base64 prefix
+      uploadBtn.disabled = false;
+    };
+
+    uploadBtn.onclick = () => {
+      fetch("https://script.google.com/macros/s/AKfycbwKCZ5ChIBsUVsS9A-rc5xGlS6EkfLrMOBQcDBgei3_QjEcleUzqiK1eNT4-DQcCQlf/exec", {
+        method: "POST",
+        body: new URLSearchParams({
+          image: imageData,
+          filename: "photo_" + Date.now() + ".jpg"
+        })
+      })
+      .then(res => res.text())
+      .then(txt => alert("Upload: " + txt))
+      .catch(err => alert("Error: " + err));
+    };
+  </script>
+</body>
+</html>
