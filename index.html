@@ -6,55 +6,32 @@
 </head>
 <body>
     <h1>Snap a Photo</h1>
-    <video id="video" autoplay playsinline width="300"></video><br>
-    <button id="snap">📸 Take Photo</button>
-    <canvas id="canvas" style="display:none;"></canvas>
+    <input type="file" accept="image/*" capture="environment" id="cameraInput">
+    <br>
     <button id="upload" disabled>⬆️ Upload</button>
 
     <script>
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const snapBtn = document.getElementById('snap');
+        const cameraInput = document.getElementById('cameraInput');
         const uploadBtn = document.getElementById('upload');
-        let imageData = "";
+        let imageBase64 = "";
 
-        // Access device camera
-        navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: { exact: "environment" },
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
-            }
-        })
-            .then(stream => video.srcObject = stream)
-            .catch(err => {
-                console.warn("Back camera not available, falling back to default:", err);
-                return navigator.mediaDevices.getUserMedia({ video: true });
-            })
-            .then(stream => {
-                if (stream) video.srcObject = stream;
-            });
+        cameraInput.addEventListener("change", () => {
+            const file = cameraInput.files[0];
+            if (!file) return;
 
-
-        snapBtn.onclick = () => {
-            const videoWidth = video.videoWidth;
-            const videoHeight = video.videoHeight;
-
-            // Set canvas to match the native resolution of video
-            canvas.width = videoWidth;
-            canvas.height = videoHeight;
-
-            ctx.drawImage(video, 0, 0, videoWidth, videoHeight);
-            imageData = canvas.toDataURL("image/jpeg").split(",")[1]; // remove base64 prefix
-            uploadBtn.disabled = false;
-        };
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                imageBase64 = e.target.result.split(',')[1]; // remove base64 prefix
+                uploadBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        });
 
         uploadBtn.onclick = () => {
-            fetch("https://script.google.com/macros/s/AKfycbxiDCyCuxW-CYnveelw_oHaKG2hEOfkJEjPeWG1si9jLLZWIpbrfsvS-3RM628UkXgRAQ/exec", {
+            fetch("https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec", {
                 method: "POST",
                 body: new URLSearchParams({
-                    image: imageData,
+                    image: imageBase64,
                     filename: "photo_" + Date.now() + ".jpg"
                 })
             })
